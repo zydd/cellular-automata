@@ -8,6 +8,8 @@ inline std::vector<bool> step(const unsigned rule, std::vector<bool> &prev) {
     std::vector<bool> row(prev.size());
     for (size_t i = 1; i < prev.size()-1; i++)
         row[i] = (rule >> (prev[i-1] << 2 | prev[i] << 1 | prev[i+1])) & 1;
+    row[0] = (rule >> (prev[prev.size()-1] << 2 | prev[0] << 1 | prev[1])) & 1;
+    row[prev.size()-1] = (rule >> (prev[prev.size()-2] << 2 | prev[prev.size()-1] << 1 | prev[0])) & 1;
     return row;
 }
 
@@ -26,13 +28,13 @@ std::vector<std::vector<bool>> automaton(size_t height, unsigned rule, std::vect
     return grid;
 }
 
-Render::Render(unsigned rule) : QQuickImageProvider(QQuickImageProvider::Pixmap),
-    m_rule(rule), m_w(64), m_h(64)
+Render::Render() : QQuickImageProvider(QQuickImageProvider::Pixmap),
+    m_rule(0), m_w(256), m_h(256), m_computed_w(2048)
 {
     m_pixCache.setCacheLimit(102400);
 
-    std::vector<bool> begin(m_w + 2);
-    begin[m_w] = 1;
+    std::vector<bool> begin(m_computed_w);
+    begin[m_computed_w/2] = 1;
     m_cache.push_back({0, begin});
 }
 
@@ -42,10 +44,10 @@ QPixmap Render::requestPixmap(const QString &id, QSize *size, const QSize &/*req
 
     if (! m_pixCache.find(id, &pixmap)) {
         auto ids = id.split('/');
-        unsigned row = ids[0].toUInt();
-//        int col = ids[1].toInt();
+        unsigned row = ids[1].toUInt();
+        int col = ids[2].toInt();
 
-        qDebug() << "rendering" << row;
+        qDebug() << "rendering" << row << col;
 
         auto pos = std::lower_bound(m_cache.rbegin(), m_cache.rend(), row * m_h,
                                     [&](const std::pair<size_t, std::vector<bool>> &e, const size_t &v) {
@@ -71,7 +73,7 @@ QPixmap Render::requestPixmap(const QString &id, QSize *size, const QSize &/*req
 
         for (int y = 0; y < s.height(); ++y) {
             for (int x = 0; x < s.width(); x++) {
-                if (grid[static_cast<size_t>(y)][static_cast<size_t>(x+1)])
+                if (grid[static_cast<size_t>(y)][static_cast<size_t>(col) * m_w % m_computed_w + static_cast<size_t>(x)])
                     painter.drawPoint(x, y);
             }
         }
@@ -82,3 +84,21 @@ QPixmap Render::requestPixmap(const QString &id, QSize *size, const QSize &/*req
     *size = pixmap.size();
     return pixmap;
 }
+
+void Render::setRule(unsigned rule)
+{
+    m_rule = rule;
+    m_pixCache.clear();
+    m_cache.clear();
+
+    std::vector<bool> begin(m_computed_w, {});
+    if (m_random) {
+        srand(42);
+        for (size_t i = 0; i < begin.size(); ++i)
+            begin[i] = rand() & 1;
+    } else {
+        begin[m_computed_w/2] = 1;
+    }
+    m_cache.push_back({0, begin});
+}
+
