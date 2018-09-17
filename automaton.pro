@@ -14,8 +14,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    render.cpp \
-    automaton.cpp
+    render.cpp
 
 RESOURCES += qml.qrc
 
@@ -31,5 +30,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    render.h \
-    automaton.h
+    render.h

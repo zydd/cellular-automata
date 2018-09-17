@@ -27,7 +27,7 @@ std::vector<std::vector<bool>> automaton(size_t height, unsigned rule, std::vect
 }
 
 Render::Render(unsigned rule) : QQuickImageProvider(QQuickImageProvider::Pixmap),
-    m_rule(rule), m_w(120), m_h(100)
+    m_rule(rule), m_w(64), m_h(64)
 {
     m_pixCache.setCacheLimit(102400);
 
@@ -41,7 +41,10 @@ QPixmap Render::requestPixmap(const QString &id, QSize *size, const QSize &/*req
     QPixmap pixmap;
 
     if (! m_pixCache.find(id, &pixmap)) {
-        unsigned row = id.toUInt();
+        auto ids = id.split('/');
+        unsigned row = ids[0].toUInt();
+//        int col = ids[1].toInt();
+
         qDebug() << "rendering" << row;
 
         auto pos = std::lower_bound(m_cache.rbegin(), m_cache.rend(), row * m_h,
