@@ -85,7 +85,7 @@ ApplicationWindow {
                 id: slider
                 Layout.fillWidth: true
                 from: 0
-                to: 128
+                to: 255
                 stepSize: 1
                 live: true
                 focus: true
